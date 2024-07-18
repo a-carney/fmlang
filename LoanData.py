@@ -3,31 +3,58 @@ import re
 
 from TVM import a_, cent, conr, PaymentFrequency as freq
 from dataclasses import dataclass
+from enum import Enum
+
+@dataclass(frozen=True)
+class Debt:
+    BALANCE: float
+    APR: float
 
 
 @dataclass(frozen=True)
 class Loan:
     BALANCE: float
     APR: float
-    PAYMENT_FREQUENCY: freq
-    LENGTH: str
+    PPY: int
+    YEARS: float
 
-    def get_number_of_payments(self):
-        length = self.LENGTH.lower()
-        numbers = float(''.join(re.findall(r'\d+', length)))
-        if any(char is 'm' for char in length):
-            return numbers * 12
-        elif any(char is 'y' for char in length):
-            return numbers
-        else:
-            raise ValueError("Error, invalid length type")
+    def num_pmt(self):
+        return round(self.PPY + self.YEARS)
 
-    def get_payment(self):
-        i = conr(self.APR, self.PAYMENT_FREQUENCY)
-        n = self.get_number_of_payments()
-        return self.BALANCE / a_(n, i)
+    def interest_rate(self):
+        return conr(self.APR, self.PPY)
 
-    def get_total_paid(self):
-        return self.get_number_of_payments() * self.get_payment()
+
+def get_loan_pmt(l: Loan) -> float:
+    return l.BALANCE / a_(l.num_pmt(), l.interest_rate())
+
+
+"""
+Ah yes, Loans. If money is the root of all evil, loans might as well be the apple tree in the garden of eden. 
+
+Consumers generally find themselves in this payment structure for a few reasons:
+    1.) Car Loan 
+    2.) Student Loan 
+    3.) Credit Card Debt
+    
+Though these loans are typically compounded daily or monthly, we will assume monthly for the time being
+
+"""
+
+
+class DebtType(Enum):
+    CAR = 0
+    STUDENT = 1
+    CREDIT = 2
+
+@dataclass(frozen=True)
+class PaymentPlan:
+    PMT: float
+    PPY: int
+
+def get_loan_data(balance: float, apr: float, length: float, ppy=12):
+
+
+
 
 
